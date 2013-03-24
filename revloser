@@ -1,0 +1,62 @@
+#!/usr/bin/env ruby
+
+require 'resolv'
+require 'optparse'
+
+help =<<-END
+Revloser is a multi-threaded resolver. It reads in fully-qualified domain \
+names separated by line breaks from STDIN.
+
+Usage:
+cat file1 | ./revloser -n [num_threads] -s [dns_server]
+
+END
+
+# Default number of threads
+@num_threads = 10
+
+# 8.8.4.4 is one of Google's public DNS servers
+@dns_server = '8.8.4.4'
+
+# Parse cli switches
+OptionParser.new do |opts|
+  opts.banner = help
+
+  opts.on('-n', '--num_threads THREADS', 'Number of threads to use') do |v|
+    @num_threads = v.to_i
+  end
+
+  opts.on('-s', '--dns_server SERVER', 'DNS Server to query against') do|v|
+    @dns_server = v
+  end
+end.parse!
+
+names = []
+threads = []
+
+# Read stdin
+ARGF.each_line { |line| names << line.chomp }
+
+@resolver = Resolv::DNS.new(nameserver: @dns_server)
+
+def resolve name
+  # puts is not thread-friendly, use print "\n" instead
+  begin
+    print "#{name}: #{@resolver.getaddress name}\n"
+  rescue Resolv::ResolvError => e
+    print "#{e}\n"
+  end
+end
+
+# Multi-threaded resolver
+@num_threads.times do
+  threads << Thread.new do
+    while names.any?
+      name = names.delete_at rand(names.size)
+      resolve name
+    end
+  end
+end
+
+# Block main thread until children are done
+threads.each { |thread| thread.join }
