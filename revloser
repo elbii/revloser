@@ -4,8 +4,8 @@ require 'resolv'
 require 'optparse'
 
 help =<<-END
-Revloser is a multi-threaded resolver. It reads in fully-qualified domain \
-names separated by line breaks from STDIN.
+Revloser is a multi-threaded resolver. It reads fully-qualified domain names \
+separated by line breaks from STDIN.
 
 Usage:
 cat file1 | ./revloser -n [num_threads] -s [dns_server]
@@ -26,7 +26,7 @@ OptionParser.new do |opts|
     @num_threads = v.to_i
   end
 
-  opts.on('-s', '--dns_server SERVER', 'DNS Server to query against') do|v|
+  opts.on('-s', '--dns_server SERVER', 'DNS Server to query against') do |v|
     @dns_server = v
   end
 end.parse!
